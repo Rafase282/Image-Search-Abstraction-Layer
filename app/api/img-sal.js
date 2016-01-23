@@ -1,5 +1,5 @@
 'use strict';
-var request = require('request');
+var Search = require('bing.search');
 module.exports = function(app, db) {
 
   app.route('/latest')
@@ -8,31 +8,45 @@ module.exports = function(app, db) {
 
   app.get('/:query', handlePost);
 
-  function handleGet (req, res, db) {
-      // Get and display latest searches
-      getHistory(db, res);
+  function handleGet(req, res, db) {
+    // Get and display latest searches
+    getHistory(db, res);
   }
-  
-  function handlePost (req, res, db) {
-      // Get images and save query and date.
-      var ip = req.headers['x-forwarded-for'] || 
-                 req.connection.remoteAddress || 
-                 req.socket.remoteAddress ||
-                 req.connection.socket.remoteAddress;
-      var query = req.params.query;
-      var size = req.query;
-      var url = 'https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=' + query + '&userip=' + ip + '&rsz=' + size.offset;
-      console.log(url);
-      request(url, function (error, response, body) {
-          if (!error && response.statusCode == 200) {
-              var info = JSON.parse(body);
-              console.log(info);
-              res.send(info);
-              //save(info, db);
-          }
-      });
+
+  function handlePost(req, res, db) {
+    // Get images and save query and date.
+    var query = req.params.query;
+    var size = req.query.offset;
+    var search = new Search(process.env.API_KEY);
+    var history = {
+      "term": query,
+      "when": new Date().toLocaleString()
+    };
+    
+    // Save query and time to the database
+    save(history, db);
+    
+    // Query the image and populate results
+    search.images(query, {
+        top: size
+      },
+      function(err, results) {
+        if (err) throw err;
+        res.send(results.map(makeList));
+      }
+    );
   }
-  
+
+  function makeList(img) {
+    // Construct object from the json result
+    return {
+      "url": img.url,
+      "snippet": img.title,
+      "thumbnail": img.thumbnail.url,
+      "context": img.sourceUrl
+    };
+  }
+
   function save(obj, db) {
     // Save object into db.
     var searches = db.collection('searches');
@@ -41,7 +55,7 @@ module.exports = function(app, db) {
       console.log('Saved ' + result);
     });
   }
-  
+
   function getHistory(db, res) {
     // Check to see if the site is already there
     var searches = db.collection('searches');
@@ -59,10 +73,5 @@ module.exports = function(app, db) {
       }
     });
   }
-
-
-
-
-
 
 };
