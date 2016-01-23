@@ -1,4 +1,5 @@
 'use strict';
+var request = require('request');
 module.exports = function(app, db) {
 
   app.route('/latest')
@@ -20,17 +21,16 @@ module.exports = function(app, db) {
                  req.connection.socket.remoteAddress;
       var query = req.params.query;
       var size = req.query;
-      var url = 'https://ajax.googleapis.com/ajax/services/search/imagesv=1.0&q=' + query + '&userip=' + ip + '&rsz=' + size.offset;
-      var xmlhttp = new XMLHttpRequest();
-      xmlhttp.onreadystatechange = function() {
-          if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-              var results = JSON.parse(xmlhttp.responseText);
-              res.send(results);
-              save(results, db);
+      var url = 'https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=' + query + '&userip=' + ip + '&rsz=' + size.offset;
+      console.log(url);
+      request(url, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              var info = JSON.parse(body);
+              console.log(info);
+              res.send(info);
+              //save(info, db);
           }
-      };
-      xmlhttp.open("GET", url, true);
-      xmlhttp.send();
+      });
   }
   
   function save(obj, db) {
