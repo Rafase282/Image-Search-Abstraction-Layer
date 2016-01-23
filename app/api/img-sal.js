@@ -5,7 +5,7 @@ module.exports = function(app, db) {
     // Retrieve most recent searches
     .get(handleGet);
 
-  app.get('/:query?offset=:int', handlePost);
+  app.get('/:query?offset=10', handlePost);
 
   function handleGet (req, res, db) {
       // Get and display latest searches
