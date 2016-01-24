@@ -1,30 +1,26 @@
 'use strict';
 var Search = require('bing.search');
-module.exports = function(app, db) {
+module.exports = function(app, History) {
 
   app.route('/latest')
     // Retrieve most recent searches
-    .get(handleGet);
+    .get(getHistory);
 
   app.get('/:query', handlePost);
 
-  function handleGet(req, res, db) {
-    // Get and display latest searches
-    getHistory(db, res);
-  }
-
-  function handlePost(req, res, db) {
+  function handlePost(req, res) {
     // Get images and save query and date.
     var query = req.params.query;
-    var size = req.query.offset;
+    var size = req.query.offset || 10;
     var search = new Search(process.env.API_KEY);
     var history = {
       "term": query,
       "when": new Date().toLocaleString()
     };
-    
     // Save query and time to the database
-    save(history, db);
+    if (query !== 'favicon.ico') {
+      save(history);
+    }
     
     // Query the image and populate results
     search.images(query, {
@@ -47,30 +43,21 @@ module.exports = function(app, db) {
     };
   }
 
-  function save(obj, db) {
+  function save(obj) {
     // Save object into db.
-    var searches = db.collection('searches');
-    searches.save(obj, function(err, result) {
+    var history = new History(obj);
+    history.save(function(err, history) {
       if (err) throw err;
-      console.log('Saved ' + result);
+      console.log('Saved ' + history);
     });
   }
 
-  function getHistory(db, res) {
+  function getHistory(req, res, History) {
     // Check to see if the site is already there
-    var searches = db.collection('searches');
-    // get the url
-    searches.find(function(err, result) {
-      if (err) throw err;
-      // object of the url
-      if (result) {
-        // we have a result
-        console.log('Found ' + result);
-        res.send(result);
-      } else {
-        // we don't
-        res.send('No history Found');
-      }
+    History.find(function(err, history) {
+      if (err) return console.error(err);
+      console.log(history);
+      res.send(history);
     });
   }
 
