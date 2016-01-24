@@ -21,7 +21,7 @@ module.exports = function(app, History) {
     if (query !== 'favicon.ico') {
       save(history);
     }
-    
+
     // Query the image and populate results
     search.images(query, {
         top: size
@@ -54,12 +54,20 @@ module.exports = function(app, History) {
 
   function getHistory(req, res) {
     // Check to see if the site is already there
-    History.find(function(err, history) {
+    History.find({}, null, {
+      "limit": 10,
+      "sort": {
+        "when": -1
+      }
+    }, function(err, history) {
       if (err) return console.error(err);
       console.log(history);
-      res.send(history.map(function (arg) {
+      res.send(history.map(function(arg) {
         // Displays only the field we need to show.
-        return {term : arg.term, when: arg.when};
+        return {
+          term: arg.term,
+          when: arg.when
+        };
       }));
     });
   }
