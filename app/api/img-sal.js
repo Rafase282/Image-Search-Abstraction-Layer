@@ -1,5 +1,7 @@
 'use strict';
+
 var Search = require('bing.search');
+
 module.exports = function(app, db) {
 
   app.route('/latest')
@@ -8,12 +10,12 @@ module.exports = function(app, db) {
 
   app.get('/:query', handlePost);
 
-  function handleGet(req, res, db) {
+  function handleGet(req, res) {
     // Get and display latest searches
-    getHistory(db, res);
+    //getHistory(db, res);
   }
 
-  function handlePost(req, res, db) {
+  function handlePost(req, res) {
     // Get images and save query and date.
     var query = req.params.query;
     var size = req.query.offset;
@@ -22,10 +24,10 @@ module.exports = function(app, db) {
       "term": query,
       "when": new Date().toLocaleString()
     };
-    
+
     // Save query and time to the database
     save(history, db);
-    
+
     // Query the image and populate results
     search.images(query, {
         top: size
@@ -47,13 +49,12 @@ module.exports = function(app, db) {
     };
   }
 
-  function save(obj, db) {
+  function save(history, db) {
     // Save object into db.
-    var searches = db.collection('searches');
-    searches.save(obj, function(err, result) {
-      if (err) throw err;
-      console.log('Saved ' + result);
-    });
+    console.log(db)
+    var newHistory = new db(history);
+    console.log(newHistory)
+    //newHistory.save();
   }
 
   function getHistory(db, res) {
