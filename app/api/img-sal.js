@@ -11,7 +11,7 @@ module.exports = function(app, History) {
   function handlePost(req, res) {
     // Get images and save query and date.
     var query = req.params.query;
-    var size = req.query.offset || 10;
+    var size = req.query.offset || 10; // Number specified or 10
     var search = new Search(process.env.API_KEY);
     var history = {
       "term": query,
